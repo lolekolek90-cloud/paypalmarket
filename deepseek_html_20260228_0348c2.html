@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paypal Logger • License System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #2b1a4a 0%, #1a1a2e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* License Screen */
+        .license-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+
+        .license-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .license-box {
+            background: #13111c;
+            border-radius: 24px;
+            padding: 40px;
+            width: 450px;
+            border: 1px solid rgba(167, 139, 250, 0.3);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .license-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .license-header h2 {
+            color: #fff;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .license-header h2 span {
+            background: linear-gradient(135deg, #a78bfa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .license-header p {
+            color: #8b8598;
+            font-size: 14px;
+        }
+
+        .license-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 36px;
+            color: white;
+            box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3);
+        }
+
+        .license-input-group {
+            margin-bottom: 25px;
+        }
+
+        .license-label {
+            color: #a89fb8;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .license-input {
+            width: 100%;
+            padding: 16px 18px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            color: #fff;
+            font-size: 16px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            letter-spacing: 2px;
+            transition: all 0.2s;
+        }
+
+        .license-input:focus {
+            outline: none;
+            border-color: #a78bfa;
+            background: rgba(167, 139, 250, 0.1);
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
+        }
+
+        .license-input::placeholder {
+            color: #4a4358;
+            letter-spacing: normal;
+        }
+
+        .license-info {
+            background: rgba(167, 139, 250, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-left: 3px solid #a78bfa;
+        }
+
+        .license-info p {
+            color: #cbc3e3;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .license-info .highlight {
+            color: #a78bfa;
+            font-weight: 600;
+        }
+
+        .license-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .license-btn {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .license-btn-primary {
+            background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+            color: white;
+            box-shadow: 0 8px 16px rgba(139, 92, 246, 0.3);
+        }
+
+        .license-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .license-btn-secondary {
+            background: rgba(255, 255, 255, 0.03);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .license-btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .error-message {
+            color: #f87171;
+            font-size: 13px;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Main App */
+        .container {
+            width: 1300px;
+            background: rgba(20, 15, 35, 0.95);
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .container.visible {
+            opacity: 1;
+        }
+
+        .header {
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .header h1 {
+            color: #fff;
+            font-size: 26px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header h1 span {
+            background: linear-gradient(135deg, #a78bfa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #8b8598;
+            font-size: 14px;
+            margin-top: 6px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 24px;
+        }
+
+        .panel-left {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .panel-title {
+            color: #cbc3e3;
+            font-size: 13px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .proxy-section {
+            margin-bottom: 28px;
+        }
+
+        .proxy-label {
+            color: #a89fb8;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .proxy-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .proxy-btn {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: #9b8db5;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .proxy-btn.active {
+            background: rgba(167, 139, 250, 0.15);
+            border-color: #a78bfa;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(167, 139, 250, 0.2);
+        }
+
+        .countries-section {
+            margin-bottom: 28px;
+        }
+
+        .countries-label {
+            color: #a89fb8;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .countries-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .country-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #e0d7f0;
+            font-size: 14px;
+        }
+
+        .country-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(167, 139, 250, 0.3);
+        }
+
+        .country-item.selected {
+            background: rgba(167, 139, 250, 0.12);
+            border-color: #a78bfa;
+        }
+
+        .country-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 12px;
+        }
+
+        .country-item.selected .country-checkbox {
+            background: #a78bfa;
+            border-color: #a78bfa;
+        }
+
+        .country-item.selected .country-checkbox::after {
+            content: "✓";
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-generate {
+            background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+            color: white;
+            box-shadow: 0 8px 16px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-stop {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-stop:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .proxy-info {
+            margin-top: 20px;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            border-left: 3px solid #a78bfa;
+            font-size: 13px;
+            color: #b9b0cc;
+        }
+
+        .proxy-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-number {
+            color: #fff;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            color: #8b8598;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .terminal {
+            background: #0c0b14;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+            height: 500px;
+        }
+
+        .terminal-header {
+            background: #13111c;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .terminal-header:hover {
+            background: #1a1727;
+        }
+
+        .terminal-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot.red { background: #ff5f56; }
+        .dot.yellow { background: #ffbd2e; }
+        .dot.green { background: #27c93f; }
+
+        .terminal-title {
+            color: #6b6578;
+            font-size: 13px;
+            font-weight: 500;
+            flex: 1;
+        }
+
+        .terminal-content {
+            flex: 1;
+            padding: 18px;
+            overflow-y: auto;
+            font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #cdd6f4;
+            background: #0c0b14;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        /* Efekt zamazania */
+        .terminal-content.blurred {
+            filter: blur(8px);
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .terminal-content.blurred::after {
+            content: '🔒 KLIKNIJ NAGŁÓWEK TERMINALA ABY ODSŁONIĆ LOGI 🔒';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #a78bfa;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 25px;
+            border-radius: 50px;
+            border: 2px solid #a78bfa;
+            z-index: 10;
+            white-space: nowrap;
+            pointer-events: none;
+            filter: none;
+            box-shadow: 0 0 30px rgba(167, 139, 250, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        .log-line {
+            padding: 6px 10px;
+            margin: 4px 0;
+            background: rgba(167, 139, 250, 0.03);
+            border-radius: 6px;
+            border-left: 2px solid #a78bfa;
+            font-family: 'SF Mono', monospace;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .log-time {
+            color: #6b6578;
+            margin-right: 12px;
+            font-size: 11px;
+        }
+
+        .log-email {
+            color: #c4b5fd;
+            font-weight: 500;
+        }
+
+        .log-pass {
+            color: #6ee7b7;
+        }
+
+        .log-country {
+            background: rgba(251, 191, 36, 0.1);
+            color: #fcd34d;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-left: 8px;
+        }
+
+        .log-proxy {
+            color: #8b8598;
+            font-size: 10px;
+            margin-left: 8px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(3px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+
+        .terminal-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .terminal-content::-webkit-scrollbar-track {
+            background: #13111c;
+        }
+
+        .terminal-content::-webkit-scrollbar-thumb {
+            background: #a78bfa;
+            border-radius: 3px;
+        }
+
+        .reveal-hint {
+            text-align: center;
+            color: #6b6578;
+            font-size: 11px;
+            margin-top: 5px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <!-- License Screen -->
+    <div class="license-screen" id="licenseScreen">
+        <div class="license-box">
+            <div class="license-icon">🔐</div>
+            <div class="license-header">
+                <h2>Paypal <span>Logger</span></h2>
+                <p>wpisz ważną licencję aby kontynuować</p>
+            </div>
+
+            <div class="license-input-group">
+                <label class="license-label">klucz licencyjny</label>
+                <input type="text" class="license-input" id="licenseKey" placeholder="XXXXX-XXXXX-XXXXX" autocomplete="off">
+            </div>
+
+            <div class="license-info">
+                <p><span class="highlight">🔒 licencja wymagana</span><br>Skontaktuj się z supportem aby otrzymać klucz</p>
+            </div>
+
+            <div class="license-buttons">
+                <button class="license-btn license-btn-primary" id="verifyLicense">weryfikuj</button>
+            </div>
+
+            <div class="error-message" id="errorMessage">
+                ❌ nieprawidłowy klucz licencyjny
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="container" id="mainApp">
+        <div class="header">
+            <h1>Paypal <span>Logger</span> ~ v2</h1>
+            <p>premium account generator • multi-proxy • licensed version</p>
+        </div>
+
+        <div class="main-grid">
+            <div class="panel-left">
+                <div class="panel-title">
+                    <i>⚡</i> konfiguracja
+                </div>
+
+                <div class="proxy-section">
+                    <div class="proxy-label">proxy provider</div>
+                    <div class="proxy-buttons">
+                        <button class="proxy-btn active" data-proxy="resi.gg">resi.gg</button>
+                        <button class="proxy-btn" data-proxy="ipburger">ipburger</button>
+                    </div>
+                </div>
+
+                <div class="countries-section">
+                    <div class="countries-label">kraje</div>
+                    <div class="countries-grid" id="countriesGrid">
+                        <div class="country-item selected" data-country="US">
+                            <div class="country-checkbox"></div>
+                            <span>🇺🇸 USA</span>
+                        </div>
+                        <div class="country-item selected" data-country="GB">
+                            <div class="country-checkbox"></div>
+                            <span>🇬🇧 UK</span>
+                        </div>
+                        <div class="country-item" data-country="DE">
+                            <div class="country-checkbox"></div>
+                            <span>🇩🇪 Niemcy</span>
+                        </div>
+                        <div class="country-item" data-country="FR">
+                            <div class="country-checkbox"></div>
+                            <span>🇫🇷 Francja</span>
+                        </div>
+                        <div class="country-item" data-country="CA">
+                            <div class="country-checkbox"></div>
+                            <span>🇨🇦 Kanada</span>
+                        </div>
+                        <div class="country-item" data-country="AU">
+                            <div class="country-checkbox"></div>
+                            <span>🇦🇺 Australia</span>
+                        </div>
+                        <div class="country-item" data-country="JP">
+                            <div class="country-checkbox"></div>
+                            <span>🇯🇵 Japonia</span>
+                        </div>
+                        <div class="country-item" data-country="PL">
+                            <div class="country-checkbox"></div>
+                            <span>🇵🇱 Polska</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-generate" id="generateBtn">generuj</button>
+                    <button class="btn btn-stop" id="stopBtn">stop</button>
+                </div>
+
+                <div class="proxy-info" id="proxyInfo">
+                    <div>resi.gg • residential network</div>
+                    <div class="proxy-status">
+                        <span class="status-dot"></span>
+                        <span>active • 185.23.45.67:8080</span>
+                    </div>
+                </div>
+
+                <div class="stats-row">
+                    <div class="stat-box">
+                        <div class="stat-number" id="generatedCount">0</div>
+                        <div class="stat-label">wygenerowano</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" id="activeProxy">resi.gg</div>
+                        <div class="stat-label">active proxy</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" id="countriesCount">2</div>
+                        <div class="stat-label">kraje</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="terminal">
+                <div class="terminal-header" id="terminalHeader">
+                    <div class="terminal-dots">
+                        <div class="dot red"></div>
+                        <div class="dot yellow"></div>
+                        <div class="dot green"></div>
+                    </div>
+                    <div class="terminal-title">paypal@logger:~/logs [licensed]</div>
+                    <span style="color: #a78bfa; font-size: 11px;">🔓 kliknij aby odsłonić</span>
+                </div>
+                <div class="terminal-content blurred" id="terminalContent">
+                    <div class="log-line">
+                        <span class="log-time">[23:14:07]</span>
+                        <span>system • logger initialized</span>
+                    </div>
+                    <div class="log-line">
+                        <span class="log-time">[23:14:07]</span>
+                        <span>system • license verified • premium access</span>
+                    </div>
+                </div>
+                <div class="reveal-hint">🔒 kliknij nagłówek terminala aby odsłonić logi</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // WSZYSTKIE DOSTĘPNE LICENCJE - UKRYTE (tylko w kodzie)
+        // ============================================
+        const VALID_LICENSES = [
+            'LOGGER-2024-001',
+            'LOGGER-2024-002',
+            'LOGGER-2024-003',
+            'PAYPAL-LOGGER-001',
+            'PAYPAL-LOGGER-002',
+            'PAYPAL-LOGGER-003',
+            'PREMIUM-LOGGER-001',
+            'PREMIUM-LOGGER-002',
+            'PREMIUM-LOGGER-003',
+            'VIP-LOGGER-001',
+            'VIP-LOGGER-002',
+            'VIP-LOGGER-003',
+            'ULTIMATE-LOGGER-001',
+            'ULTIMATE-LOGGER-002',
+            'ULTIMATE-LOGGER-003'
+        ];
+
+        // ============================================
+        // SYSTEM LICENCJI
+        // ============================================
+        class LicenseSystem {
+            constructor() {
+                this.licenseScreen = document.getElementById('licenseScreen');
+                this.mainApp = document.getElementById('mainApp');
+                this.licenseInput = document.getElementById('licenseKey');
+                this.verifyBtn = document.getElementById('verifyLicense');
+                this.errorMessage = document.getElementById('errorMessage');
+
+                this.init();
+            }
+
+            init() {
+                // Sprawdź czy już był weryfikowany w tej sesji
+                if (sessionStorage.getItem('licensed') === 'true') {
+                    this.unlockApp();
+                }
+
+                this.verifyBtn.addEventListener('click', () => this.verify());
+                
+                this.licenseInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.verify();
+                });
+            }
+
+            verify() {
+                const key = this.licenseInput.value.trim();
+                
+                if (VALID_LICENSES.includes(key)) {
+                    // Poprawna licencja
+                    this.errorMessage.classList.remove('show');
+                    sessionStorage.setItem('licensed', 'true');
+                    this.unlockApp();
+                } else {
+                    // Błędna licencja
+                    this.errorMessage.classList.add('show');
+                    this.licenseInput.style.borderColor = '#f87171';
+                    
+                    // Efekt shake
+                    this.licenseInput.style.animation = 'none';
+                    this.licenseInput.offsetHeight;
+                    this.licenseInput.style.animation = 'shake 0.3s ease';
+                    
+                    setTimeout(() => {
+                        this.licenseInput.style.animation = '';
+                    }, 300);
+                }
+            }
+
+            unlockApp() {
+                this.licenseScreen.classList.add('hidden');
+                this.mainApp.classList.add('visible');
+                
+                // Dodaj info do terminala
+                setTimeout(() => {
+                    const terminal = document.getElementById('terminalContent');
+                    const time = new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    
+                    const log = document.createElement('div');
+                    log.className = 'log-line';
+                    log.innerHTML = `<span class="log-time">[${time}]</span> <span>system • license verified • premium unlocked</span>`;
+                    terminal.appendChild(log);
+                }, 500);
+            }
+        }
+
+        // ============================================
+        // GENERATOR (tylko po weryfikacji)
+        // ============================================
+        class Generator {
+            constructor() {
+                this.isGenerating = false;
+                this.count = 0;
+                this.interval = null;
+                this.currentProxy = 'resi.gg';
+                this.isRevealed = false;
+                
+                this.initElements();
+                this.initEvents();
+            }
+
+            initElements() {
+                this.terminal = document.getElementById('terminalContent');
+                this.terminalHeader = document.getElementById('terminalHeader');
+                this.generateBtn = document.getElementById('generateBtn');
+                this.stopBtn = document.getElementById('stopBtn');
+                this.proxyInfo = document.getElementById('proxyInfo');
+                this.generatedCount = document.getElementById('generatedCount');
+                this.activeProxy = document.getElementById('activeProxy');
+                this.countriesCount = document.getElementById('countriesCount');
+                
+                this.proxyBtns = document.querySelectorAll('.proxy-btn');
+                this.countryItems = document.querySelectorAll('.country-item');
+            }
+
+            initEvents() {
+                this.proxyBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        this.proxyBtns.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        this.currentProxy = btn.dataset.proxy;
+                        this.updateProxyInfo();
+                        this.activeProxy.textContent = this.currentProxy;
+                    });
+                });
+
+                this.countryItems.forEach(item => {
+                    item.addEventListener('click', () => {
+                        item.classList.toggle('selected');
+                        this.updateCountriesCount();
+                    });
+                });
+
+                this.generateBtn.addEventListener('click', () => this.start());
+                this.stopBtn.addEventListener('click', () => this.stop());
+                
+                // Kliknięcie w nagłówek terminala odsłania logi
+                this.terminalHeader.addEventListener('click', () => {
+                    this.isRevealed = !this.isRevealed;
+                    if (this.isRevealed) {
+                        this.terminal.classList.remove('blurred');
+                        this.terminalHeader.querySelector('span').innerHTML = '🔒 kliknij aby ukryć';
+                    } else {
+                        this.terminal.classList.add('blurred');
+                        this.terminalHeader.querySelector('span').innerHTML = '🔓 kliknij aby odsłonić';
+                    }
+                });
+            }
+
+            updateProxyInfo() {
+                const proxy = this.currentProxy;
+                const text = proxy === 'resi.gg' ? 'resi.gg • residential network' : 'ipburger • global network';
+                const ip = proxy === 'resi.gg' ? '185.23.45.67:8080' : '45.67.89.123:3128';
+                this.proxyInfo.innerHTML = `
+                    <div>${text}</div>
+                    <div class="proxy-status">
+                        <span class="status-dot"></span>
+                        <span>active • ${ip}</span>
+                    </div>
+                `;
+            }
+
+            updateCountriesCount() {
+                const selected = document.querySelectorAll('.country-item.selected').length;
+                this.countriesCount.textContent = selected;
+            }
+
+            generateEmail() {
+                const domains = ['gmail', 'yahoo', 'outlook', 'hotmail', 'proton'];
+                const name = Math.random().toString(36).substring(2, 10);
+                const domain = domains[Math.floor(Math.random() * domains.length)];
+                return `${name}@${domain}.com`;
+            }
+
+            generatePassword() {
+                const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%';
+                return Array(12).fill(0).map(() => chars[Math.floor(Math.random() * chars.length)]).join('');
+            }
+
+            getRandomCountry() {
+                const selected = document.querySelectorAll('.country-item.selected');
+                if (selected.length === 0) return null;
+                return selected[Math.floor(Math.random() * selected.length)].dataset.country;
+            }
+
+            getCountryFlag(country) {
+                const flags = {
+                    'US': '🇺🇸', 'GB': '🇬🇧', 'DE': '🇩🇪', 'FR': '🇫🇷',
+                    'CA': '🇨🇦', 'AU': '🇦🇺', 'JP': '🇯🇵', 'PL': '🇵🇱'
+                };
+                return flags[country] || '🌍';
+            }
+
+            addLog() {
+                const country = this.getRandomCountry();
+                if (!country) {
+                    alert('wybierz przynajmniej jeden kraj');
+                    this.stop();
+                    return;
+                }
+
+                const time = new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const email = this.generateEmail();
+                const pass = this.generatePassword();
+                const flag = this.getCountryFlag(country);
+
+                const log = document.createElement('div');
+                log.className = 'log-line';
+                log.innerHTML = `
+                    <span class="log-time">[${time}]</span>
+                    <span class="log-email">${email}</span>
+                    <span> : </span>
+                    <span class="log-pass">${pass}</span>
+                    <span class="log-country">${flag} ${country}</span>
+                    <span class="log-proxy">[${this.currentProxy}]</span>
+                `;
+
+                this.terminal.appendChild(log);
+                this.terminal.scrollTop = this.terminal.scrollHeight;
+                
+                this.count++;
+                this.generatedCount.textContent = this.count;
+            }
+
+            clearTerminal() {
+                this.terminal.innerHTML = '';
+                const time = new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                
+                const log = document.createElement('div');
+                log.className = 'log-line';
+                log.innerHTML = `<span class="log-time">[${time}]</span> <span>system • konsola wyczyszczona</span>`;
+                this.terminal.appendChild(log);
+            }
+
+            start() {
+                if (this.isGenerating) return;
+                
+                const selected = document.querySelectorAll('.country-item.selected').length;
+                if (selected === 0) {
+                    alert('wybierz przynajmniej jeden kraj');
+                    return;
+                }
+
+                this.isGenerating = true;
+                this.clearTerminal();
+                
+                const time = new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const startLog = document.createElement('div');
+                startLog.className = 'log-line';
+                startLog.innerHTML = `<span class="log-time">[${time}]</span> <span>system • generowanie rozpoczęte [${this.currentProxy}]</span>`;
+                this.terminal.appendChild(startLog);
+
+                this.interval = setInterval(() => this.addLog(), 600);
+            }
+
+            stop() {
+                if (this.isGenerating) {
+                    clearInterval(this.interval);
+                    this.isGenerating = false;
+                    
+                    const time = new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    const stopLog = document.createElement('div');
+                    stopLog.className = 'log-line';
+                    stopLog.innerHTML = `<span class="log-time">[${time}]</span> <span>system • zatrzymano (${this.count} logów)</span>`;
+                    this.terminal.appendChild(stopLog);
+
+                    setTimeout(() => {
+                        this.clearTerminal();
+                        this.count = 0;
+                        this.generatedCount.textContent = '0';
+                    }, 2000);
+                }
+            }
+        }
+
+        // ============================================
+        // URUCHOMIENIE
+        // ============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            const license = new LicenseSystem();
+            const generator = new Generator();
+        });
+    </script>
+</body>
+</html>
